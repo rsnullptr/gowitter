@@ -3,36 +3,42 @@ package twitter
 import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
-	"log"
+	"net/http"
 )
 
-// NewClient is a helper function that will return a twitter client
-// that we can subsequently use to send tweets, or to stream new tweets
-// this will take in a pointer to a Credential struct which will contain
-// everything needed to authenticate and return a pointer to a twitter Client
-// or an error
-func NewClient(creds *Credentials) (*twitter.Client, error) {
-	// Pass in your consumer key (API Key) and your Consumer Secret (API Secret)
-	config := oauth1.NewConfig(creds.ConsumerKey, creds.ConsumerSecret)
-	// Pass in your Access Token and your Access Token Secret
-	token := oauth1.NewToken(creds.AccessToken, creds.AccessTokenSecret)
+type Bot struct {
+	*twitter.Client
+}
 
+type Search = twitter.Search
+type Tweet = twitter.Tweet
+
+// NewBot return bot instance
+func NewBot(creds *Credentials) (Bot, error) {
+	config := oauth1.NewConfig(creds.ConsumerKey, creds.ConsumerSecret)
+	token := oauth1.NewToken(creds.AccessToken, creds.AccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	client := twitter.NewClient(httpClient)
 
-	// Verify Credentials
 	verifyParams := &twitter.AccountVerifyParams{
 		SkipStatus:   twitter.Bool(true),
 		IncludeEmail: twitter.Bool(true),
 	}
 
-	// we can retrieve the user and verify if the twitter
-	// we have used successfully allow us to log in!
-	user, _, err := client.Accounts.VerifyCredentials(verifyParams)
+	_, _, err := client.Accounts.VerifyCredentials(verifyParams)
 	if err != nil {
-		return nil, err
+		return Bot{}, err
 	}
 
-	log.Printf("User's ACCOUNT:\n%+v\n", user)
-	return client, nil
+	return Bot{Client: client}, nil
+}
+
+func (b Bot) Tweet(tweetMsg string) (*Tweet, *http.Response, error) {
+	return b.Client.Statuses.Update(tweetMsg, nil)
+}
+
+func (b Bot) Search(query string) (*Search, *http.Response, error) {
+	return b.Client.Search.Tweets(&twitter.SearchTweetParams{
+		Query: query,
+	})
 }
