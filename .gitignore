@@ -13,3 +13,12 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+.credentials.idea
+bin
+.credentials
+.tweets
+.idea/gowitter.iml .idea/modules.xml .idea/vcs.xml .idea/workspace.xml
+/.idea/.gitignore
+/.idea/gowitter.iml
+/.idea/modules.xml
+/.idea/vcs.xml
